@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 import json
 import time
@@ -7,8 +6,20 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 app = Flask(__name__)
+
+def setup_driver():
+    options = Options()
+    options.headless = True  # Activa el modo sin encabezado
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    # Inicializar ChromeDriver en modo sin encabezado
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 @app.route('/upload_json', methods=['POST'])
 def upload_json():
@@ -18,18 +29,13 @@ def upload_json():
         return jsonify({"error": "No JSON data provided"}), 400
     
     # Configuración del driver de Selenium para WhatsApp Web
-    options = Options()
-    options.add_argument('--headless')  # Modo headless para servidores
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    service = Service(executable_path='/path/to/chromedriver')  # Ajusta la ruta de tu chromedriver
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = setup_driver()
 
     try:
         # Abre WhatsApp Web
         driver.get("https://web.whatsapp.com")
         print("Esperando para escanear el código QR...")
-        time.sleep(30)  # Tiempo para escanear el código QR
+        time.sleep(50)  # Tiempo para escanear el código QR
 
         # Enviar los mensajes
         for item in messages:
