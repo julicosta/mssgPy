@@ -1,46 +1,62 @@
 import json
 import time
-import requests
+from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 
-# Función para descargar el archivo JSON desde Google Drive
-def download_json_from_google_drive(file_id):
-    # URL modificada para descargar el archivo
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = requests.get(url)
-    response.raise_for_status()  # Verifica si la solicitud fue exitosa
-    return response.json()  # Esto debería funcionar ahora con un JSON válido
+from flask import Flask, request, jsonify
+import json
+import time
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
-# Especifica la ruta al chromedriver
-service = Service(executable_path='C:/Users/julia/Desktop/chromedriver-script/chromedriver-win64/chromedriver-win64/chromedriver.exe')
-driver = webdriver.Chrome(service=service)
+app = Flask(__name__)
 
-# Abre WhatsApp Web
-driver.get("https://web.whatsapp.com")
-
-# Esperar tiempo suficiente para escanear el código QR manualmente (ajusta el tiempo si es necesario)
-print("Esperando para que escanees el código QR...")
-time.sleep(30)  # Espera 30 segundos o ajusta según necesites
-
-# ID del archivo en Google Drive
-file_id = '1eb8GRs8u6eCGkh1YiIKHTC-CevonC5Z1'  # Reemplaza esto con tu ID de archivo
-messages = download_json_from_google_drive(file_id)
-
-# Enviar los mensajes
-for item in messages:
-    phone = item['phone']
-    message = item['message']
+@app.route('/upload_json', methods=['POST'])
+def upload_json():
+    # Recibir JSON desde la solicitud
+    messages = request.get_json()
+    if not messages:
+        return jsonify({"error": "No JSON data provided"}), 400
     
-    # Abrir el chat de WhatsApp
-    driver.get(f"https://web.whatsapp.com/send?phone={phone}&text={message}")
-    time.sleep(10)  # Esperar a que se cargue la página
+    # Configuración del driver de Selenium para WhatsApp Web
+    options = Options()
+    options.add_argument('--headless')  # Modo headless para servidores
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    service = Service(executable_path='/path/to/chromedriver')  # Ajusta la ruta de tu chromedriver
+    driver = webdriver.Chrome(service=service, options=options)
 
-    # Hacer clic en el botón de enviar
-    send_button = driver.find_element(By.XPATH, '//span[@data-icon="send"]')
-    send_button.click()
-    time.sleep(5)  # Esperar un momento antes de enviar el siguiente mensaje
+    try:
+        # Abre WhatsApp Web
+        driver.get("https://web.whatsapp.com")
+        print("Esperando para escanear el código QR...")
+        time.sleep(30)  # Tiempo para escanear el código QR
 
-# Cierra el driver
-driver.quit()
+        # Enviar los mensajes
+        for item in messages:
+            phone = item['phone']
+            message = item['message']
+            driver.get(f"https://web.whatsapp.com/send?phone={phone}&text={message}")
+            time.sleep(10)  # Espera a que se cargue la página
+
+            # Hacer clic en el botón de enviar
+            send_button = driver.find_element(By.XPATH, '//span[@data-icon="send"]')
+            send_button.click()
+            time.sleep(5)  # Esperar un momento antes de enviar el siguiente mensaje
+
+        return jsonify({"status": "Mensajes enviados exitosamente"}), 200
+    
+    except Exception as e:
+        print(f"Error al enviar mensajes: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+    finally:
+        driver.quit()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

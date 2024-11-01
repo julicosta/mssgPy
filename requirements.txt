@@ -1,2 +1,3 @@
+flask
 selenium
-google-cloud-storage
+gunicorn
