@@ -1,9 +1,3 @@
-import json
-import time
-from flask import Flask, request, jsonify
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 
 from flask import Flask, request, jsonify
 import json
@@ -58,5 +52,7 @@ def upload_json():
     finally:
         driver.quit()
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+import os
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
