@@ -17,15 +17,17 @@ def setup_driver():
     options.headless = True  # Activa el modo sin encabezado
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")  # Deshabilita la GPU
+    options.add_argument("--remote-debugging-port=9222")  # Habilita el puerto de depuración remota
+    options.add_argument("--window-size=1920x1080")  # Establece un tamaño de ventana
 
-    # Inicializar ChromeDriver en modo sin encabezado
+    # Inicializar ChromeDriver en modo sin cabeza
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 @app.route('/upload_json', methods=['POST'])
 def upload_json():
-    # Recibir JSON desde la solicitud
     app.logger.info("Solicitud recibida en /upload_json")
     messages = request.get_json()
     app.logger.info(f"Contenido del JSON recibido: {messages}")
