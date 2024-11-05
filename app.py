@@ -16,9 +16,10 @@ def setup_driver():
     options = Options()
     options.headless = True  # Activa el modo sin encabezado
     options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-dev-shm-usage")  # Evita el uso de /dev/shm
     options.add_argument("--disable-gpu")  # Deshabilita la GPU
-    options.add_argument("--remote-debugging-port=9222")  # Habilita el puerto de depuración remota
+    options.add_argument("--enable-logging")  # Habilita registros de Chrome
+    options.add_argument("--v=1")  # Mayor verbosidad
     options.add_argument("--window-size=1920x1080")  # Establece un tamaño de ventana
 
     # Inicializar ChromeDriver en modo sin cabeza
