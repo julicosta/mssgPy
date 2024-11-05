@@ -7,8 +7,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from flask_cors import CORS  # Importar CORS para habilitarlo
 
 app = Flask(__name__)
+CORS(app)  # Habilita CORS para todas las rutas
 
 def setup_driver():
     options = Options()
@@ -24,7 +26,10 @@ def setup_driver():
 @app.route('/upload_json', methods=['POST'])
 def upload_json():
     # Recibir JSON desde la solicitud
+    app.logger.info("Solicitud recibida en /upload_json")
     messages = request.get_json()
+    app.logger.info(f"Contenido del JSON recibido: {messages}")
+    
     if not messages:
         return jsonify({"error": "No JSON data provided"}), 400
     
@@ -34,7 +39,7 @@ def upload_json():
     try:
         # Abre WhatsApp Web
         driver.get("https://web.whatsapp.com")
-        print("Esperando para escanear el código QR...")
+        app.logger.info("Esperando para escanear el código QR...")
         time.sleep(50)  # Tiempo para escanear el código QR
 
         # Enviar los mensajes
@@ -52,7 +57,7 @@ def upload_json():
         return jsonify({"status": "Mensajes enviados exitosamente"}), 200
     
     except Exception as e:
-        print(f"Error al enviar mensajes: {e}")
+        app.logger.error(f"Error al enviar mensajes: {e}")
         return jsonify({"error": str(e)}), 500
     
     finally:

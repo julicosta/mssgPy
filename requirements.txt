@@ -3,3 +3,4 @@ selenium
 gunicorn
 requests
 webdriver-manager
+flask-cors
