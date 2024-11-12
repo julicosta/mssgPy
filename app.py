@@ -1,79 +1,45 @@
-from flask import Flask, request, jsonify
-import time
-import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from flask_cors import CORS
+from flask import Flask, jsonify
+import logging
 
 app = Flask(__name__)
-CORS(app)  # Habilita CORS para todas las rutas
 
+# Función para configurar el driver de Selenium
 def setup_driver():
     options = Options()
-    options.headless = True  # Modo sin cabeza (sin interfaz gráfica)
-    options.add_argument("--no-sandbox")  # Soluciona problemas de permisos
-    options.add_argument("--disable-dev-shm-usage")  # Uso más eficiente de memoria
-    options.add_argument("--disable-gpu")  # Desactiva la aceleración por GPU
-    options.add_argument("--window-size=1920x1080")  # Establece un tamaño de ventana
+    options.headless = True  # Ejecutar en modo headless
+    options.add_argument("--no-sandbox")  # Permite ejecutar el navegador sin restricciones
+    options.add_argument("--disable-dev-shm-usage")  # Evita problemas con memoria compartida
+    options.add_argument("--disable-gpu")  # Deshabilita la GPU (no se necesita en un entorno sin cabeza)
+    options.add_argument("--window-size=1920x1080")  # Tamaño de ventana (necesario en headless)
+    options.add_argument("--remote-debugging-port=9222")  # Evita problemas con DevTools
 
-    # Inicializar ChromeDriver en modo sin cabeza
     try:
+        app.logger.info("Inicializando ChromeDriver...")
+        # Usando ChromeDriverManager para instalar el driver compatible
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
+        app.logger.info("ChromeDriver inicializado exitosamente.")
         return driver
     except Exception as e:
         app.logger.error(f"Error al inicializar el driver: {e}")
         raise
 
+# Ruta de ejemplo para verificar el funcionamiento del driver
 @app.route('/upload_json', methods=['POST'])
 def upload_json():
-    app.logger.info("Solicitud recibida en /upload_json")
-    messages = request.get_json()
-    app.logger.info(f"Contenido del JSON recibido: {messages}")
-
-    if not messages:
-        return jsonify({"error": "No JSON data provided"}), 400
-
-    # Validación de estructura de JSON
-    for item in messages:
-        if 'phone' not in item or 'message' not in item:
-            return jsonify({"error": "Cada entrada debe tener 'phone' y 'message'"}), 400
-
-    driver = setup_driver()
-
     try:
-        # Abre WhatsApp Web
-        driver.get("https://web.whatsapp.com")
-        app.logger.info("Esperando para escanear el código QR...")
-        WebDriverWait(driver, 90).until(
-            EC.presence_of_element_located((By.XPATH, '//canvas[@aria-label="Escanee este código QR"]'))
-        )
-
-        for item in messages:
-            phone = item['phone']
-            message = item['message']
-            driver.get(f"https://web.whatsapp.com/send?phone={phone}&text={message}")
-
-            # Espera a que el botón de enviar esté presente
-            send_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH, '//span[@data-icon="send"]'))
-            )
-            send_button.click()
-            time.sleep(5)  # Pausa opcional para asegurar el envío
-
-        return jsonify({"status": "Mensajes enviados exitosamente"}), 200
-
+        driver = setup_driver()
+        # Aquí puedes usar el driver para interactuar con el navegador
+        driver.get("http://www.google.com")
+        return jsonify({"status": "success", "message": "Página cargada correctamente."})
     except Exception as e:
-        app.logger.error(f"Error al enviar mensajes: {e}")
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        driver.quit()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
+    # Configuración de logging para mejor visibilidad de los errores
+    logging.basicConfig(level=logging.INFO)
+    app.run(host='0.0.0.0', port=8080)
