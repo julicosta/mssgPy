@@ -15,11 +15,11 @@ CORS(app)  # Habilita CORS para todas las rutas
 
 def setup_driver():
     options = Options()
-    options.headless = True
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920x1080")
+    options.headless = True  # Modo sin cabeza (sin interfaz gráfica)
+    options.add_argument("--no-sandbox")  # Soluciona problemas de permisos
+    options.add_argument("--disable-dev-shm-usage")  # Uso más eficiente de memoria
+    options.add_argument("--disable-gpu")  # Desactiva la aceleración por GPU
+    options.add_argument("--window-size=1920x1080")  # Establece un tamaño de ventana
 
     # Inicializar ChromeDriver en modo sin cabeza
     try:
